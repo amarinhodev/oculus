@@ -27,6 +27,7 @@ _mock_config.CAPTIONS_DIR = "/tmp/oculus_test_captions"
 _mock_config.ARCHIVE_DIR = "/tmp/oculus_test_archive"
 _mock_config.TRANSCRIPT_PREFIX = "Google Meet transcript"
 _mock_config.DEBUG_MODE = False
+_mock_config.LOCAL_USER_ALIASES = ["You", "Você"]
 
 sys.modules.setdefault("config", _mock_config)
 
@@ -99,14 +100,14 @@ class TestProcessSection:
         assert "Carlos Souza" in turns[1]
 
     def test_process_user_name_substitution(self):
-        """'Você' and 'You' are replaced by config.USER_NAME."""
+        """LOCAL_USER_ALIASES entries are replaced by config.USER_NAME."""
         lines_voce = [
-            "Você (01/06/2025, 09:30 AM)",  # TranscripTonic uses "Você" in PT-BR — intentional
+            "Você (01/06/2025, 09:30 AM)",  # TranscripTonic PT-BR alias — intentional fixture
             "Estou presente.",
         ]
         turns_v, participants_v = process_section(lines_voce)
         assert _mock_config.USER_NAME in turns_v[0]
-        assert "Você" not in turns_v[0]  # TranscripTonic uses "Você" in PT-BR — intentional
+        assert "Você" not in turns_v[0]  # TranscripTonic PT-BR alias — intentional fixture
 
         lines_you = [
             "You (01/06/2025, 09:30 AM)",
@@ -172,9 +173,9 @@ class TestParseFilename:
         """Title contains ' at ' — regex must not cut the title early.
         'Reunião at Scale' must be preserved in full.
         """
-        filename = "Google Meet transcript-Reunião at Scale at 27-05-2026, 04-57 PM on.txt"  # PT-BR meeting title — tests the ' at ' edge case in filename parsing
+        filename = "Google Meet transcript-Reunião at Scale at 27-05-2026, 04-57 PM on.txt"  # PT-BR title — tests the " at " edge case in filename parsing
         title, date_iso, time_hhmm = parse_filename(filename)
-        assert title == "Reunião at Scale"  # PT-BR meeting title — tests the ' at ' edge case in filename parsing
+        assert title == "Reunião at Scale"  # PT-BR title — tests the " at " edge case in filename parsing
         assert date_iso == "2026-05-27"
         # 04:57 PM → 16:57
         assert time_hhmm == "16-57"
