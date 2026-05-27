@@ -80,8 +80,8 @@ def process_section(lines):
             speaker = speaker_match.group(1)
             time_str = speaker_match.group(2)
 
-            # Normalise "You" / "Você" to the configured username
-            if speaker in ("Você", "You"):
+            # Normalise local-user aliases to the configured username
+            if speaker in config.LOCAL_USER_ALIASES:
                 speaker = config.USER_NAME
 
             # Track participants (will be filtered for non-user later)
