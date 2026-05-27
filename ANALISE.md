@@ -9,7 +9,7 @@ updated: 2026-05-27
 
 # 🔭 O.C.U.L.U.S. — Relatório de Análise Técnica
 
-> **Repositório:** https://github.com/andersonsilvaviva/oculus  
+> **Repositório:** https://github.com/amarinhodev/oculus  
 > **Analisado por:** Agente CLAW  
 > **Data:** 2026-05-27  
 
@@ -205,6 +205,6 @@ O arquivo `requirements.txt` lista apenas `pyyaml`, porém o módulo `pyyaml` **
 ## 🔗 Referências
 - [[Engineering/Projects/OCULUS]]
 - [[daily/2026-05-27]]
-- Repo: https://github.com/andersonsilvaviva/oculus
+- Repo: https://github.com/amarinhodev/oculus
 - TranscripTonic: https://chromewebstore.google.com/detail/transcriptonic/ciepnfnceimjehngolkijpnbappkkiag
 - Gemini CLI: https://github.com/google/gemini-cli
