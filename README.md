@@ -1,85 +1,133 @@
-# O.C.U.L.U.S. (Google Meet Transcriber)
+# O.C.U.L.U.S.
+**Omniscient Captions Universal Logging & Understanding System**
 
-## 1. Overview
-**O.C.U.L.U.S.** stands for **O**mniscient **C**aptions **U**niversal **L**ogging & **U**nderstanding **S**ystem.
+Automatically turns your Google Meet transcripts into structured, AI-analyzed notes in your Obsidian vault.
 
-It provides automated capture and processing of Google Meet transcriptions using the TranscripTonic extension and Python-based automation.
-
-**Key Technologies:**
-- Python 3.11+
-- [TranscripTonic](https://chromewebstore.google.com/detail/transcriptonic/ciepnfnceimjehngolkijpnbappkkiag) Extension
-- [Gemini CLI](https://github.com/google/gemini-cli) (AI Engine & Automation)
-- [Obsidian](https://obsidian.md/) (Note organization and visualization)
-
-## 2. Workflow
-1. **Capture:** The [TranscripTonic](https://chromewebstore.google.com/detail/transcriptonic/ciepnfnceimjehngolkijpnbappkkiag) extension captures Google Meet captions and chat in real-time.
-2. **Export:** Upon ending the meeting, the extension automatically saves the transcript as a `.txt` file in your Downloads folder.
-3. **Monitoring:** The `watcher.py` service instantly detects the new file.
-4. **Processing:** The `processor.py` script converts the raw `.txt` into organized Markdown (.md), categorized by speaker and timestamp.
-5. **Intelligence:** The system optionally triggers AI analysis to extract tasks, decisions, and insights via Gemini CLI.
-
-## 3. Project Structure
-```text
-/
-├── processor.py        # Specialized processor for TranscripTonic files.
-├── watcher.py          # File monitor and AI automation trigger.
-├── config.py           # Centralized configuration and paths.
-├── requirements.txt    # Python dependencies.
-├── .gitignore          # Sensitive data protection.
-├── README.md           # This documentation.
-└── Captions/           # Local destination for Markdown transcripts.
-```
-
-## 4. Setup and Installation
-
-### 4.1. Data Source (Browser)
-1. Install the [TranscripTonic](https://chromewebstore.google.com/detail/transcriptonic/ciepnfnceimjehngolkijpnbappkkiag) extension.
-2. Enable "Auto Mode" in the extension to automatically save transcripts at the end of meetings.
-
-### 4.2. AI Engine (Gemini CLI)
-1. Install **Gemini CLI** (follow official repository instructions).
-2. Install the Obsidian integration extension:
-   ```bash
-   gemini extensions install https://github.com/thoreinstein/gemini-obsidian
-   ```
-3. Set your Obsidian vault path in Gemini CLI:
-   ```bash
-   gemini obsidian set-vault /path/to/your/vault
-   ```
-
-### 4.3. Python Environment
-1. Create and activate a virtual environment (recommended):
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
-2. Create your local config from the example: `cp config.example.py config.py`.
-3. Edit `config.py` with your download directories, username, and **preferred language** for AI notes.
-4. Install dependencies: `pip install -r requirements.txt`
-
-### 4.4. Running the Automation
-Start the watcher to automatically process and analyze downloaded files:
-```bash
-python3 watcher.py
-```
-
-## 5. How Automation Works
-The `watcher.py` service uses the `gemini` CLI to trigger intelligent analysis. The project includes a skill definition in `/skills/oculus-analyzer`.
-
-### 5.1. Installing the Skill
-Register the skill in your Gemini environment:
-```bash
-gemini skill add ./skills/oculus-analyzer
-```
-
-### 5.2. Skill Features
-The `oculus-analyzer` (V8) is responsible for:
-- Detecting context via semantic search (RAG).
-- Extracting tasks and decisions.
-- Organizing notes into structured folders (e.g., `Meetings/`).
-- Recording progress in the Daily Log (`daily/`).
-- **Multilingual Support:** Generates all summaries and notes in the language defined in your `config.py` (e.g., Portuguese, English, Spanish).
-
-> **Note:** This skill is designed to work within an Obsidian vault. It will automatically detect or create your organizational structure (Folders like `Meetings/` and `daily/`).
+![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue) ![Cross-platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey) ![Gemini CLI](https://img.shields.io/badge/AI-Gemini%20CLI-orange) ![Obsidian](https://img.shields.io/badge/notes-Obsidian-purple)
 
 ---
+
+## How it works
+
+```
+Google Meet → TranscripTonic → watcher.py → processor.py → Gemini CLI (V9.2) → Obsidian vault
+```
+
+| Step | What happens |
+|------|-------------|
+| **Google Meet** | You have your meeting normally |
+| **TranscripTonic** | Chrome extension captures captions and saves a `.txt` to your Downloads |
+| **watcher.py** | Real-time file monitor (watchdog) detects the new transcript instantly |
+| **processor.py** | Converts raw `.txt` into structured Markdown, organized by speaker and timestamp |
+| **Gemini CLI (V9.2)** | AI skill queries your Obsidian vault via RAG, then generates the final note |
+| **Obsidian vault** | Structured `.md` note lands in your Meetings folder + daily log updated |
+
+---
+
+## Prerequisites *(manual steps — only these two)*
+
+1. Install [TranscripTonic](https://chromewebstore.google.com/detail/transcriptonic/ciepnfnceimjehngolkijpnbappkkiag) Chrome extension — enable **Auto Mode**
+2. Have **Python 3.11+** installed
+
+Everything else is handled automatically by the installer.
+
+---
+
+## Installation
+
+```bash
+git clone https://github.com/amarinhodev/oculus
+cd oculus
+python install.py
+```
+
+That's it. OCULUS will run automatically every time you log in.
+
+**What `install.py` does behind the scenes:**
+- Creates a Python virtual environment
+- Installs dependencies (`watchdog`, etc.)
+- Installs Gemini CLI if not present
+- Installs the `oculus-analyzer` skill (V9.2) into Gemini
+- Walks you through minimal config (name, vault path, language)
+- Registers the watcher as a background service (macOS LaunchAgent / Linux systemd / Windows Task Scheduler)
+
+---
+
+## Configuration
+
+`install.py` creates `config.py` from `config.example.py` during setup. You can edit it at any time.
+
+| Setting | Description | Example |
+|---------|-------------|---------|
+| `USER_NAME` | Your name as it appears in transcripts | `"John Smith"` |
+| `PREFERRED_LANGUAGE` | Language for AI-generated notes | `"English"`, `"Brazilian Portuguese"`, `"Spanish"` |
+| `OBSIDIAN_VAULT` | Path to your Obsidian vault | `"~/Documents/MyVault"` |
+
+---
+
+## What gets generated
+
+After each meeting, a structured note appears in your Obsidian vault:
+
+- **Structured `.md` note** in your `Meetings/` folder
+- **YAML frontmatter:** title, date, participants, meeting type
+- **Executive summary** — key topics covered
+- **Decisions** — what was decided
+- **Action items** — who does what, by when
+- **Insights** — patterns and observations from the conversation
+- **WikiLinks** to related projects, people, and tools discovered in your vault
+- **Entry in the daily log** (`daily/YYYY-MM-DD.md`)
+
+---
+
+## Project structure
+
+```
+oculus/
+├── watcher.py              # Real-time file monitor (watchdog) + AI trigger
+├── processor.py            # TranscripTonic → structured Markdown converter
+├── install.py              # Cross-platform installer (macOS/Linux/Windows)
+├── uninstall.py            # Clean uninstaller
+├── config.example.py       # Configuration template
+├── requirements.txt        # Python dependencies
+├── skills/
+│   └── oculus-analyzer/
+│       └── SKILL.md        # Gemini CLI skill (V9.2 — RAG-native)
+└── tests/
+    └── test_processor.py   # Automated test suite (22 tests)
+```
+
+---
+
+## Uninstall
+
+```bash
+python uninstall.py
+```
+
+Removes the background service, virtual environment, and optionally the config file. Your Obsidian notes are never deleted.
+
+---
+
+## How the AI analysis works
+
+The `oculus-analyzer` skill (V9.2) is RAG-native — it reads your vault before writing anything:
+
+- **Before analyzing your transcript**, the AI queries your Obsidian vault to discover your projects, people, and tools
+- **Queries are executed in your `PREFERRED_LANGUAGE`** for maximum accuracy
+- **Links mentioned topics** to existing notes in your vault automatically
+- **No hardcoded knowledge** — works for any user, any vault structure
+
+---
+
+## Multilingual support
+
+OCULUS itself is in English, but the notes it generates follow your `PREFERRED_LANGUAGE` setting.
+
+Supported: any language Gemini CLI supports (English, Brazilian Portuguese, Spanish, French, German, and more).
+
+---
+
+## License / Contributing
+
+MIT License. Contributions welcome — open an issue or submit a PR.
