@@ -1,9 +1,9 @@
 """
 OCULUS — test_processor.py
-Suite de testes automatizados para as funções core do processor.py.
+Automated test suite for core processor.py functions.
 
-Importa diretamente as funções via mock de config para isolamento total.
-Roda com: pytest data/oculus/tests/
+Imports functions directly via config mock for full isolation.
+Runs with: pytest data/oculus/tests/
 """
 
 import sys
@@ -15,11 +15,11 @@ from datetime import datetime
 from unittest.mock import patch
 
 # ---------------------------------------------------------------------------
-# Bootstrap: injetar mock de config ANTES de importar processor
+# Bootstrap: inject config mock BEFORE importing processor
 # ---------------------------------------------------------------------------
 
-# Cria um módulo 'config' falso no sys.modules para que o processor.py
-# possa importá-lo mesmo sem um config.py real.
+# Creates a fake 'config' module in sys.modules so that processor.py
+# can import it even without a real config.py.
 _mock_config = types.ModuleType("config")
 _mock_config.USER_NAME = "Anderson Silva"
 _mock_config.SOURCE_DIR = "/tmp/oculus_test_source"
@@ -30,12 +30,12 @@ _mock_config.DEBUG_MODE = False
 
 sys.modules.setdefault("config", _mock_config)
 
-# Garante que o diretório do processor.py esteja no path
+# Ensures the processor.py directory is on the path
 _OCULUS_DIR = os.path.join(os.path.dirname(__file__), "..")
 if _OCULUS_DIR not in sys.path:
     sys.path.insert(0, _OCULUS_DIR)
 
-from processor import (  # noqa: E402 — import após bootstrap de config
+from processor import (  # noqa: E402 — import after config bootstrap
     merge_fragments,
     process_section,
     detect_meeting_type,
@@ -51,28 +51,28 @@ from processor import (  # noqa: E402 — import após bootstrap de config
 class TestMergeFragments:
 
     def test_merge_single_fragment(self):
-        """Lista com 1 item retorna o item (sem trailing space)."""
-        result = merge_fragments(["Olá, mundo!"])
-        assert result == "Olá, mundo!"
+        """List with 1 item returns the item (no trailing space)."""
+        result = merge_fragments(["Hello, world!"])
+        assert result == "Hello, world!"
 
     def test_merge_identical_fragments(self):
-        """Duplicatas exatas são removidas — apenas uma cópia permanece."""
+        """Exact duplicates are removed — only one copy remains."""
         result = merge_fragments(["hello world", "hello world", "hello world"])
         assert result == "hello world"
 
     def test_merge_incremental_fragments(self):
-        """Fragmento B que começa igual a A mas é maior substitui A."""
-        fragments = ["Bom dia", "Bom dia pessoal, vamos começar"]
+        """Fragment B that starts like A but is longer replaces A."""
+        fragments = ["Good morning", "Good morning everyone, let's get started"]
         result = merge_fragments(fragments)
-        assert result == "Bom dia pessoal, vamos começar"
+        assert result == "Good morning everyone, let's get started"
 
     def test_merge_empty_list(self):
-        """Lista vazia retorna string vazia."""
+        """Empty list returns empty string."""
         result = merge_fragments([])
         assert result == ""
 
     def test_merge_whitespace_fragments(self):
-        """Fragmentos contendo apenas espaço são ignorados."""
+        """Fragments containing only whitespace are ignored."""
         result = merge_fragments(["   ", "\t", "texto real", "  "])
         assert result == "texto real"
 
@@ -84,7 +84,7 @@ class TestMergeFragments:
 class TestProcessSection:
 
     def test_process_basic_speakers(self):
-        """Múltiplos speakers geram turnos com timestamps corretos."""
+        """Multiple speakers generate turns with correct timestamps."""
         lines = [
             "Maria Oliveira (01/06/2025, 09:30 AM)",
             "Bom dia a todos.",
@@ -99,14 +99,14 @@ class TestProcessSection:
         assert "Carlos Souza" in turns[1]
 
     def test_process_user_name_substitution(self):
-        """'Você' e 'You' são substituídos por config.USER_NAME."""
+        """'Você' and 'You' are replaced by config.USER_NAME."""
         lines_voce = [
-            "Você (01/06/2025, 09:30 AM)",
+            "Você (01/06/2025, 09:30 AM)",  # TranscripTonic uses "Você" in PT-BR — intentional
             "Estou presente.",
         ]
         turns_v, participants_v = process_section(lines_voce)
         assert _mock_config.USER_NAME in turns_v[0]
-        assert "Você" not in turns_v[0]
+        assert "Você" not in turns_v[0]  # TranscripTonic uses "Você" in PT-BR — intentional
 
         lines_you = [
             "You (01/06/2025, 09:30 AM)",
@@ -117,7 +117,7 @@ class TestProcessSection:
         assert "You" not in turns_y[0]
 
     def test_process_empty_lines_ignored(self):
-        """Linhas vazias não geram turnos extras."""
+        """Empty lines do not generate extra turns."""
         lines = [
             "",
             "Maria Oliveira (01/06/2025, 09:30 AM)",
@@ -129,10 +129,10 @@ class TestProcessSection:
         assert len(turns) == 1
 
     def test_process_system_lines_ignored(self):
-        """Linhas com 'Transcript saved using' são ignoradas."""
+        """Lines containing 'Transcript saved using' are ignored."""
         lines = [
             "Anderson Silva (01/06/2025, 09:30 AM)",
-            "Mensagem válida.",
+            "Valid message.",
             "Transcript saved using TranscripTonic",
         ]
         turns, _ = process_section(lines)
@@ -140,7 +140,7 @@ class TestProcessSection:
         assert "Transcript saved" not in turns[0]
 
     def test_process_same_speaker_consecutive(self):
-        """Falas consecutivas do mesmo speaker no mesmo timestamp são agrupadas."""
+        """Consecutive lines from same speaker at same timestamp are merged."""
         lines = [
             "Maria Oliveira (01/06/2025, 09:30 AM)",
             "Primeira frase.",
@@ -148,20 +148,20 @@ class TestProcessSection:
             "Segunda frase do mesmo turno.",
         ]
         turns, _ = process_section(lines)
-        # Deve resultar em apenas 1 turno (mesmo speaker, mesmo timestamp)
+        # Should result in only 1 turn (same speaker, same timestamp)
         assert len(turns) == 1
         assert "Primeira frase" in turns[0]
         assert "Segunda frase" in turns[0]
 
 
 # ===========================================================================
-# parse_filename() — parser de nome de arquivo
+# parse_filename() — filename parser
 # ===========================================================================
 
 class TestParseFilename:
 
     def test_parse_simple_title(self):
-        """Filename padrão simples: extrai título, data ISO e hora."""
+        """Simple standard filename: extracts title, ISO date and time."""
         filename = "Google Meet transcript-Weekly at 27-05-2026, 09-30 AM on.txt"
         title, date_iso, time_hhmm = parse_filename(filename)
         assert title == "Weekly"
@@ -169,18 +169,18 @@ class TestParseFilename:
         assert time_hhmm == "09-30"
 
     def test_parse_title_with_at(self):
-        """Título contém ' at ' — a regex não deve cortar o título cedo.
-        'Reunião at Scale' deve ser preservado integralmente.
+        """Title contains ' at ' — regex must not cut the title early.
+        'Reunião at Scale' must be preserved in full.
         """
-        filename = "Google Meet transcript-Reunião at Scale at 27-05-2026, 04-57 PM on.txt"
+        filename = "Google Meet transcript-Reunião at Scale at 27-05-2026, 04-57 PM on.txt"  # PT-BR meeting title — tests the ' at ' edge case in filename parsing
         title, date_iso, time_hhmm = parse_filename(filename)
-        assert title == "Reunião at Scale"
+        assert title == "Reunião at Scale"  # PT-BR meeting title — tests the ' at ' edge case in filename parsing
         assert date_iso == "2026-05-27"
         # 04:57 PM → 16:57
         assert time_hhmm == "16-57"
 
     def test_parse_title_with_multiple_at(self):
-        """Título com múltiplos 'at' — apenas o último sufixo de data é o delimitador."""
+        """Title with multiple 'at' — only the last date suffix is the delimiter."""
         filename = "Google Meet transcript-Sync at Scale at Speed at 10-06-2026, 11-00 AM on.txt"
         title, date_iso, time_hhmm = parse_filename(filename)
         assert title == "Sync at Scale at Speed"
@@ -188,13 +188,13 @@ class TestParseFilename:
         assert time_hhmm == "11-00"
 
     def test_parse_fallback_on_bad_filename(self):
-        """Nome que não bate com o padrão → usa data de hoje sem lançar exceção."""
+        """Filename not matching pattern → falls back to today's date without raising."""
         filename = "arquivo_completamente_errado.txt"
         today = datetime.now().strftime("%Y-%m-%d")
         title, date_iso, time_hhmm = parse_filename(filename)
         assert date_iso == today
         assert time_hhmm == "00-00"
-        # Não deve lançar exceção — chegou até aqui significa que passou
+        # Must not raise an exception — reaching here means it passed
 
 
 # ===========================================================================
@@ -216,7 +216,7 @@ class TestDetectMeetingType:
         assert detect_meeting_type("FUP Projeto X") == "follow-up"
 
     def test_type_default(self):
-        """Título sem keyword reconhecida → 'meeting'."""
+        """Title with no recognized keyword → 'meeting'."""
         assert detect_meeting_type("Brainstorm") == "meeting"
 
 
@@ -241,20 +241,20 @@ class TestBuildFrontmatter:
         return build_frontmatter(**defaults)
 
     def test_frontmatter_has_required_fields(self):
-        """title, date, time, type, participants, source, tags estão presentes."""
+        """title, date, time, type, participants, source, tags are present."""
         fm = self._make_frontmatter()
         for field in ("title", "date", "time", "type", "participants", "source", "tags"):
-            assert field in fm, f"Campo '{field}' ausente no frontmatter"
+            assert field in fm, f"Field '{field}' missing from frontmatter"
 
     def test_frontmatter_participants_excludes_user(self):
-        """config.USER_NAME NÃO deve aparecer na lista de participants."""
+        """config.USER_NAME must NOT appear in the participants list."""
         participants_with_user = [
             _mock_config.USER_NAME,
             "Maria Oliveira",
             "Carlos Souza",
         ]
-        # build_frontmatter recebe a lista já filtrada por process_files()
-        # Testamos que se passarmos sem o user, ele não aparece
+        # build_frontmatter receives the list already filtered by process_files()
+        # We test that if we pass without the user, they do not appear
         participants_clean = [
             p for p in participants_with_user if p != _mock_config.USER_NAME
         ]
@@ -262,15 +262,15 @@ class TestBuildFrontmatter:
         assert _mock_config.USER_NAME not in fm
 
     def test_frontmatter_valid_yaml(self):
-        """O bloco frontmatter é YAML válido (yaml.safe_load não levanta exceção)."""
+        """The frontmatter block is valid YAML (yaml.safe_load does not raise)."""
         fm = self._make_frontmatter()
-        # Extrai o conteúdo entre os delimitadores ---
+        # Extract content between --- delimiters
         inner = fm.strip()
         if inner.startswith("---"):
             inner = inner[3:]
         if inner.endswith("---"):
             inner = inner[:-3]
-        # Não deve lançar exceção
+        # Must not raise an exception
         parsed = yaml.safe_load(inner)
         assert isinstance(parsed, dict)
         assert parsed["title"] == "Daily ITOps"
