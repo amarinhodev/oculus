@@ -13,11 +13,14 @@ ARCHIVE_DIR = os.path.join(SOURCE_DIR, "Processed")
 USER_NAME = "Your Name"  # Name displayed in transcripts when it is "You"
 PREFERRED_LANGUAGE = "English"  # Language for AI summaries and notes (e.g., English, Brazilian Portuguese, Spanish)
 
+# Transcript prefix — used by both watcher.py and processor.py
+TRANSCRIPT_PREFIX = "Google Meet transcript"
 
 # Logs
+LOG_FILE = os.path.join(PROJECT_ROOT, "watcher.log")          # Main rotating log (watcher + analysis)
 LOG_ANALYSIS = os.path.join(PROJECT_ROOT, "analysis.log")
 LOG_ANALYSIS_ERROR = os.path.join(PROJECT_ROOT, "analysis_error.log")
-LOG_WATCHER = os.path.join(PROJECT_ROOT, "watcher.log")
+LOG_WATCHER = os.path.join(PROJECT_ROOT, "watcher.log")       # Legacy alias — same as LOG_FILE
 LOG_WATCHER_ERROR = os.path.join(PROJECT_ROOT, "watcher_error.log")
 
 # Scripts and Binaries

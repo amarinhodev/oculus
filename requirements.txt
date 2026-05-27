@@ -1,1 +1,8 @@
-pyyaml
+# O.C.U.L.U.S. Python dependencies
+# External binary dependency: gemini CLI (install via npm: npm install -g @google/generative-ai-cli)
+
+watchdog>=4.0.0
+
+# Testing
+pytest>=8.0.0
+pyyaml>=6.0
