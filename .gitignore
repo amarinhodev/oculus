@@ -1,0 +1,18 @@
+# Python Environment
+.venv/
+__pycache__/
+*.pyc
+
+# Dynamic Data (Transcripts and Analyses)
+Captions/
+Engineering/
+Log_Entregas_*.md
+
+# Infrastructure and Security (Certs and Keys)
+*.pem
+env.yaml
+config.py
+
+# Logs
+*.log
+development_log.md
