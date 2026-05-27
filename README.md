@@ -60,6 +60,7 @@ That's it. OCULUS will run automatically every time you log in.
 | Setting | Description | Example |
 |---------|-------------|---------|
 | `USER_NAME` | Your name as it appears in transcripts | `"John Smith"` |
+| `LOCAL_USER_ALIASES` | How TranscripTonic labels you in transcripts | `["You", "Vous"]` |
 | `PREFERRED_LANGUAGE` | Language for AI-generated notes | `"English"`, `"Brazilian Portuguese"`, `"Spanish"` |
 | `OBSIDIAN_VAULT` | Path to your Obsidian vault | `"~/Documents/MyVault"` |
 
