@@ -13,6 +13,11 @@ ARCHIVE_DIR = os.path.join(SOURCE_DIR, "Processed")
 USER_NAME = "Your Name"  # Name displayed in transcripts when it is "You"
 PREFERRED_LANGUAGE = "English"  # Language for AI summaries and notes (e.g., English, Brazilian Portuguese, Spanish)
 
+# Aliases used by TranscripTonic for the local user in different languages.
+# Add the alias for your language if not listed.
+# Common values: "You" (EN), "Você" (PT-BR), "Vous" (FR), "Usted" (ES), "Sie" (DE), "Lei" (IT)
+LOCAL_USER_ALIASES = ["You", "Você"]
+
 # Transcript prefix — used by both watcher.py and processor.py
 TRANSCRIPT_PREFIX = "Google Meet transcript"
 
