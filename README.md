@@ -19,6 +19,7 @@ It provides automated capture and processing of Google Meet transcriptions using
 5. **Intelligence:** The system optionally triggers AI analysis to extract tasks, decisions, and insights via Gemini CLI.
 
 ## 3. Project Structure
+```text
 /
 ├── processor.py        # Specialized processor for TranscripTonic files.
 ├── watcher.py          # File monitor and AI automation trigger.
@@ -27,6 +28,7 @@ It provides automated capture and processing of Google Meet transcriptions using
 ├── .gitignore          # Sensitive data protection.
 ├── README.md           # This documentation.
 └── Captions/           # Local destination for Markdown transcripts.
+```
 
 ## 4. Setup and Installation
 
