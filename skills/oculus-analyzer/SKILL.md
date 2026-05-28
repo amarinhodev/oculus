@@ -299,15 +299,8 @@ tags:
    or default `Meetings/`)
 3. If the folder does not exist, create it before saving
 
-### 5.2 — Index in RAG
-
-```python
-if obsidian_rag_index is available:
-    obsidian_rag_index(note_path)
-```
-
-Execute silently — do not block if the index is unavailable.
-This step ensures the new meeting note is discoverable in future queries.
+### 5.2 — Save Confirmation
+Log the successful creation of the file internally. Do NOT explicitly call indexing tools unless specifically requested by the environment, as this may consume unnecessary context.
 
 ---
 
@@ -318,7 +311,7 @@ This step ensures the new meeting note is discoverable in future queries.
 | 🚫 Never ask | NEVER interact with the user during execution — decide and execute |
 | 🚫 Never hardcode | NEVER insert project, person, or system names in this skill |
 | 🚫 Never list dirs | NEVER list directories or read frontmatter file by file — use RAG |
-| ✅ RAG first | Step 1 uses exclusively semantic queries to `obsidian_rag_index` |
+| ✅ RAG first | Step 1 uses exclusively semantic queries |
 | ✅ Query language | ALL RAG queries must be in PREFERRED_LANGUAGE — never default to English for non-English vaults |
 | ✅ Graceful fallback | RAG unavailable → log WARNING → continue without vault_context → basic note |
 | ✅ Append only | Daily log: always APPEND, never overwrite |
@@ -362,7 +355,7 @@ This step ensures the new meeting note is discoverable in future queries.
        │  APPEND to section ## 🗓️ Meetings
        │
        ▼
-[Step 5] Save note + index RAG
+[Step 5] Save note
        │
        ▼
 [Completed — no user interaction]
