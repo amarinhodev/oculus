@@ -3,7 +3,7 @@
 
 Automatically turns your Google Meet transcripts into structured, AI-analyzed notes in your Obsidian vault.
 
-![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue) ![Cross-platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey) ![Gemini CLI](https://img.shields.io/badge/AI-Gemini%20CLI-orange) ![Obsidian](https://img.shields.io/badge/notes-Obsidian-purple)
+![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue) ![macOS](https://img.shields.io/badge/platform-macOS-lightgrey) ![Gemini CLI](https://img.shields.io/badge/AI-Gemini%20CLI-orange) ![Obsidian](https://img.shields.io/badge/notes-Obsidian-purple)
 
 ---
 
@@ -49,7 +49,7 @@ That's it. OCULUS will run automatically every time you log in.
 - Installs Gemini CLI if not present
 - Installs the `oculus-analyzer` skill (V9.2) into Gemini
 - Walks you through minimal config (name, vault path, language)
-- Registers the watcher as a background service (macOS LaunchAgent / Linux systemd / Windows Task Scheduler)
+- Registers the watcher as a background service via macOS LaunchAgent
 
 ---
 
@@ -87,7 +87,7 @@ After each meeting, a structured note appears in your Obsidian vault:
 oculus/
 ├── watcher.py              # Real-time file monitor (watchdog) + AI trigger
 ├── processor.py            # TranscripTonic → structured Markdown converter
-├── install.py              # Cross-platform installer (macOS/Linux/Windows)
+├── install.py              # Native installer (optimized for macOS)
 ├── uninstall.py            # Clean uninstaller
 ├── config.example.py       # Configuration template
 ├── requirements.txt        # Python dependencies
