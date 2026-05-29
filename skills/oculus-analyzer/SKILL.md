@@ -69,7 +69,7 @@ Use `date` and `time` to name the output file and locate the correct daily log.
 
 ### Step 1.1 — Active Projects Query
 
-Execute the following query **in PREFERRED_LANGUAGE** via `obsidian_rag_index`:
+Execute the following query **in PREFERRED_LANGUAGE** via `obsidian_rag_query`:
 
 > "What are the active or in-progress projects in this vault? List name, status and relative path."
 > *(PT-BR example: "Quais são os projetos ativos ou em andamento neste vault? Liste nome, status e caminho relativo.")*
@@ -82,7 +82,7 @@ to iterate files manually. Process the response to extract:
 
 ### Step 1.2 — Recurring People Query
 
-Execute the following query **in PREFERRED_LANGUAGE** via `obsidian_rag_index`:
+Execute the following query **in PREFERRED_LANGUAGE** via `obsidian_rag_query`:
 
 > "Who are the people frequently mentioned in this vault? Identify names that appear in multiple notes."
 > *(PT-BR example: "Quem são as pessoas mencionadas com frequência neste vault?")*
@@ -93,7 +93,7 @@ The RAG identifies people semantically, cross-referencing multiple notes. Proces
 
 ### Step 1.3 — Systems and Tools Query
 
-Execute the following query **in PREFERRED_LANGUAGE** via `obsidian_rag_index`:
+Execute the following query **in PREFERRED_LANGUAGE** via `obsidian_rag_query`:
 
 > "What systems, tools, APIs or platforms are mentioned in this vault? List acronyms and full names."
 > *(PT-BR example: "Quais sistemas, ferramentas, APIs ou plataformas são mencionados neste vault?")*
@@ -161,7 +161,7 @@ For entities mentioned in the transcription, **use RAG query** instead of manual
 Formulate the query in PREFERRED_LANGUAGE:
 
 1. Identify key entities mentioned in the transcription (projects, systems, acronyms, tools)
-2. Execute query via `obsidian_rag_index` **in PREFERRED_LANGUAGE** with transcription context:
+2. Execute query via `obsidian_rag_query` **in PREFERRED_LANGUAGE** with transcription context:
    ```
    "This meeting mentioned [X], [Y], [Z]. Which notes in the vault are related to these topics?"
    ```
