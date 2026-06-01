@@ -29,6 +29,7 @@ LOG_WATCHER = os.path.join(PROJECT_ROOT, "watcher.log")       # Legacy alias —
 LOG_WATCHER_ERROR = os.path.join(PROJECT_ROOT, "watcher_error.log")
 
 # Scripts and Binaries
+GEMINI_BIN = "gemini" # Absolute path to gemini CLI (detected during install)
 PROCESSOR_SCRIPT = os.path.join(PROJECT_ROOT, "processor.py")
 # Try to find python in venv, otherwise use default
 PYTHON_BIN = os.path.join(PROJECT_ROOT, ".venv", "bin", "python3")

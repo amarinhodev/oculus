@@ -105,11 +105,14 @@ def step3_install_dependencies(oculus_dir: Path) -> None:
 def step4_gemini_cli() -> str:
     header("Step 4 — Verify Gemini CLI")
     gemini_path = shutil.which("gemini")
-    if gemini_path:
-        ok(f"gemini CLI found at: {gemini_path}")
-        return gemini_path
+    node_path = shutil.which("node")
     
-    abort("gemini CLI not found in PATH.", "Please install it first: npm install -g @google/gemini-cli")
+    if gemini_path and node_path:
+        full_command = f"{node_path} {gemini_path}"
+        ok(f"gemini CLI found at: {gemini_path}")
+        return full_command
+    
+    abort("gemini CLI or Node not found in PATH.", "Please install Node.js and Gemini CLI: npm install -g @google/gemini-cli")
 
 def step5_install_skill(os_name: str, oculus_dir: Path) -> None:
     header("Step 5 — Install oculus-analyzer skill")

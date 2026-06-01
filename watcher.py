@@ -85,16 +85,7 @@ def analyze_file(md_path: str) -> bool:
 
     Returns True on successful launch, False otherwise.
     """
-    if not shutil.which("gemini"):
-        logger.warning(
-            "Gemini CLI not found in PATH. Analysis will be skipped until installed. "
-            "File queued for later: %s",
-            md_path,
-        )
-        if md_path not in _pending_analysis:
-            _pending_analysis.append(md_path)
-        return False
-
+    # Triggering analysis
     logger.info("Triggering Gemini analysis for: %s", md_path)
     prompt = (
         f"Analyze the transcription {md_path} using the oculus-analyzer skill. "
@@ -103,7 +94,12 @@ def analyze_file(md_path: str) -> bool:
         "and organize results according to the skill workflow. "
         "DO NOT ASK QUESTIONS, EXECUTE IMMEDIATELY."
     )
-    cmd = ["gemini", "-y", "-p", prompt]
+    
+    # Split GEMINI_BIN in case it contains arguments (e.g. 'node /path/to/gemini')
+    cmd = config.GEMINI_BIN.split() + ["-y", "-p", prompt]
+    
+    logger.debug("Executing command: %s", " ".join(cmd))
+    
     try:
         subprocess.Popen(
             cmd,
@@ -149,34 +145,31 @@ def analyze_file_with_retry(md_path: str, max_retries: int = 3) -> bool:
 
 def run_batch_process() -> None:
     """
-    Process all pending TXT files in SOURCE_DIR.
-
-    Converts them to Markdown via processor.py then triggers Gemini analysis.
+    Process all pending TXT files in SOURCE_DIR and trigger Gemini analysis
+    for recent Markdown files in CAPTIONS_DIR.
     """
     try:
         txt_files = get_files(config.SOURCE_DIR)
-        if not txt_files:
-            logger.info("No pending transcript files found in SOURCE_DIR.")
-            return
-
-        logger.info("Processing batch of %d file(s)…", len(txt_files))
-
-        # Convert TXT → MD via processor
-        result = subprocess.run(
-            [config.PYTHON_BIN, config.PROCESSOR_SCRIPT],
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode != 0:
-            logger.warning(
-                "Processor exited with code %d. stderr: %s",
-                result.returncode,
-                result.stderr.strip(),
+        if txt_files:
+            logger.info("Processing batch of %d file(s)…", len(txt_files))
+            # Convert TXT → MD via processor
+            result = subprocess.run(
+                [config.PYTHON_BIN, config.PROCESSOR_SCRIPT],
+                capture_output=True,
+                text=True,
             )
+            if result.returncode != 0:
+                logger.warning(
+                    "Processor exited with code %d. stderr: %s",
+                    result.returncode,
+                    result.stderr.strip(),
+                )
+            else:
+                logger.info("Processor completed successfully.")
         else:
-            logger.info("Processor completed successfully.")
+            logger.debug("No pending transcript files found in SOURCE_DIR.")
 
-        # Trigger Gemini analysis for today's new MD files
+        # Trigger Gemini analysis for today's MD files
         today_str = datetime.now().strftime("%Y-%m-%d")
         try:
             md_files = [f for f in os.listdir(config.CAPTIONS_DIR) if f.endswith(".md")]
@@ -243,13 +236,6 @@ class TranscriptHandler(FileSystemEventHandler):
 
 def run_watcher() -> None:
     """Start the OCULUS watcher using watchdog Observer."""
-
-    # Warn if Gemini is absent — but keep running
-    if not shutil.which("gemini"):
-        logger.warning(
-            "Gemini CLI not found in PATH. "
-            "Analysis will be skipped until installed."
-        )
 
     logger.info("👁️  O.C.U.L.U.S. Watcher Active. Monitoring: %s", config.SOURCE_DIR)
 
