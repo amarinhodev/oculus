@@ -71,13 +71,13 @@ That's it. OCULUS will run automatically every time you log in.
 After each meeting, a structured note appears in your Obsidian vault:
 
 - **Structured `.md` note** in your `Meetings/` folder
+- **Automatic Daily Log integration:** OCULUS creates the daily note (if missing) and appends a summary of the meeting.
 - **YAML frontmatter:** title, date, participants, meeting type
 - **Executive summary** — key topics covered
 - **Decisions** — what was decided
 - **Action items** — who does what, by when
 - **Insights** — patterns and observations from the conversation
 - **WikiLinks** to related projects, people, and tools discovered in your vault
-- **Entry in the daily log** (`daily/YYYY-MM-DD.md`)
 
 ---
 

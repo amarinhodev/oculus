@@ -8,6 +8,9 @@ DEBUG_MODE = True
 CAPTIONS_DIR = os.path.join(PROJECT_ROOT, "Captions")
 SOURCE_DIR = os.path.expanduser("~/Downloads/TranscripTonic")
 ARCHIVE_DIR = os.path.join(SOURCE_DIR, "Processed")
+VAULT_PATH = "~/Documents/ObsidianVault"
+DAILY_PATH = os.path.join(VAULT_PATH, "daily")
+TEMPLATE_DAILY = os.path.join(VAULT_PATH, "_Templates", "Daily_Template.md")
 
 # Identity and Language
 USER_NAME = "Your Name"  # Name displayed in transcripts when it is "You"

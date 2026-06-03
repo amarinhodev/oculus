@@ -216,6 +216,35 @@ def build_frontmatter(
     return frontmatter
 
 
+def ensure_daily_note(date_iso: str):
+    """Ensures the Obsidian daily note exists for the given date.
+    If it doesn't, creates it from template.
+    """
+    daily_file = os.path.join(config.DAILY_PATH, f"{date_iso}.md")
+    if os.path.exists(daily_file):
+        return
+
+    logger.info("Daily note '%s' not found. Creating from template...", daily_file)
+    try:
+        if not os.path.exists(config.DAILY_PATH):
+            os.makedirs(config.DAILY_PATH)
+            
+        if os.path.exists(config.TEMPLATE_DAILY):
+            with open(config.TEMPLATE_DAILY, "r", encoding="utf-8") as tf:
+                template_content = tf.read()
+            content = template_content.replace("{{date}}", date_iso)
+        else:
+            # Fallback if template is missing
+            content = f"---\ntags: [daily]\ndate: {date_iso}\n---\n\n# 📅 Diário — {date_iso}\n\n## 🗓️ Meetings\n"
+
+        with open(daily_file, "w", encoding="utf-8") as df:
+            with open(daily_file, "w", encoding="utf-8") as df:
+                df.write(content)
+        logger.info("✅ Created daily note: %s", daily_file)
+    except Exception as exc:
+        logger.error("Failed to create daily note: %s", exc)
+
+
 # ---------------------------------------------------------------------------
 # Main processing
 # ---------------------------------------------------------------------------
@@ -275,6 +304,9 @@ def process_files():
 
         # Parse filename robustly
         meeting_title, date_iso, time_hhmm = parse_filename(filename)
+
+        # Ensure daily note exists
+        ensure_daily_note(date_iso)
 
         # Classify meeting type
         meeting_type = detect_meeting_type(meeting_title)

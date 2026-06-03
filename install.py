@@ -146,15 +146,77 @@ def step6_configure(oculus_dir: Path, gemini_path: str) -> None:
 
     template = (oculus_dir / "config.example.py").read_text(encoding="utf-8")
     user_name = input(_ansi("  User name: ", WHITE)).strip() or "You"
-    obsidian_path = input(_ansi("  Obsidian vault path: ", WHITE)).strip() or str(Path.home() / "Documents" / "Obsidian")
+    obsidian_path = input(_ansi("  Obsidian vault path (absolute path): ", WHITE)).strip() or str(Path.home() / "Documents" / "Obsidian")
     
+    # Expand ~ if used
+    obsidian_path = str(Path(obsidian_path).expanduser().resolve())
+
     patched = template.replace('USER_NAME = "Your Name"', f'USER_NAME = "{user_name}"')
     patched = patched.replace('GEMINI_BIN = "gemini"', f'GEMINI_BIN = "{gemini_path}"')
-    if "OBSIDIAN_VAULT" not in patched:
-        patched += f'\nOBSIDIAN_VAULT = "{obsidian_path}"\n'
+    patched = patched.replace('VAULT_PATH = "~/Documents/ObsidianVault"', f'VAULT_PATH = "{obsidian_path}"')
     
     config_file.write_text(patched, encoding="utf-8")
     ok("config.py created")
+    return Path(obsidian_path)
+
+def step7_prepare_obsidian(vault_path: Path) -> None:
+    header("Step 7 — Prepare Obsidian Vault")
+    
+    # Required folders
+    folders = ["Meetings", "daily", "_Templates"]
+    for folder in folders:
+        folder_path = vault_path / folder
+        if not folder_path.exists():
+            folder_path.mkdir(parents=True, exist_ok=True)
+            ok(f"Created folder: {folder}")
+        else:
+            info(f"Folder exists: {folder}")
+
+    # Create Default Daily Template
+    daily_template_path = vault_path / "_Templates" / "Daily_Template.md"
+    if not daily_template_path.exists():
+        content = textwrap.dedent("""\
+            ---
+            tags: [daily]
+            date: {{date}}
+            ---
+
+            # 📅 Daily Log — {{date}}
+
+            ## 🗓️ Meetings
+            <!-- OCULUS will automatically append meetings here -->
+
+            ## ✅ Tasks Completed
+
+            ## 💡 Notes & Insights
+        """)
+        daily_template_path.write_text(content, encoding="utf-8")
+        ok("Created default Daily_Template.md")
+
+    # Create Default Project Template (ALFA Protocol Lite)
+    project_template_path = vault_path / "_Templates" / "Project_Template.md"
+    if not project_template_path.exists():
+        content = textwrap.dedent("""\
+            ---
+            tags: [project]
+            status: active
+            created: {{date}}
+            ---
+
+            # 🚀 Project: Name
+
+            ## 📋 Overview
+            Brief description of the project goals.
+
+            ## 🛠️ Components & Architecture
+            - [[Component1]]
+            - [[Component2]]
+
+            ## 🗓️ Related Meetings
+            <!-- Link to meeting notes from /Meetings folder here -->
+        """)
+        project_template_path.write_text(content, encoding="utf-8")
+        ok("Created default Project_Template.md")
 
 def _register_macos(python_bin: str, oculus_dir: Path) -> None:
     label = "com.oculus.watcher"
@@ -214,7 +276,8 @@ def main():
     step3_install_dependencies(oculus_dir)
     gemini_path = step4_gemini_cli()
     step5_install_skill(os_name, oculus_dir)
-    step6_configure(oculus_dir, gemini_path)
+    vault_path = step6_configure(oculus_dir, gemini_path)
+    step7_prepare_obsidian(vault_path)
     
     if os_name == "Darwin":
         _register_macos(sys.executable, oculus_dir)

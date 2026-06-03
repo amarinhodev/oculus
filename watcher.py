@@ -101,13 +101,23 @@ def analyze_file(md_path: str) -> bool:
     logger.debug("Executing command: %s", " ".join(cmd))
     
     try:
-        subprocess.Popen(
+        result = subprocess.run(
             cmd,
             stdin=subprocess.DEVNULL,
-            stdout=open(config.LOG_ANALYSIS, "a"),
-            stderr=open(config.LOG_ANALYSIS_ERROR, "a"),
+            capture_output=True,
+            text=True
         )
-        return True
+        
+        if result.returncode == 0:
+            logger.info("✅ Gemini analysis completed successfully for: %s", md_path)
+            return True
+        else:
+            logger.error("❌ Gemini analysis failed with code %d for '%s'", result.returncode, md_path)
+            logger.error("Error details: %s", result.stderr.strip())
+            if md_path not in _pending_analysis:
+                _pending_analysis.append(md_path)
+            return False
+            
     except Exception as exc:
         logger.error("Failed to launch Gemini for '%s': %s", md_path, exc)
         if md_path not in _pending_analysis:
