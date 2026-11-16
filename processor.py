@@ -107,34 +107,32 @@ def process_section(lines):
 
 
 def detect_meeting_type(title: str) -> str:
-    """Classify meeting based on keywords in the title."""
+    """Classify meeting based on keywords in the title (Dataview V9.0 contract)."""
     lower = title.lower()
     if any(k in lower for k in ("daily", "standup", "stand-up")):
         return "daily"
     if any(k in lower for k in ("weekly", "semanal")):
         return "weekly"
     if any(k in lower for k in ("1:1", "one on one", "one-on-one")):
-        return "1:1"
+        return "one-on-one"
     if any(k in lower for k in ("fup", "follow-up", "follow up")):
-        return "follow-up"
-    if "planning" in lower:
-        return "planning"
+        return "fup"
     return "meeting"
 
 
-def parse_filename(filename: str):
+def parse_filename(filename: str, source_path: str | None = None):
     """Extract meeting_title, date_iso, time_hhmm from a TranscripTonic filename.
 
-    TranscripTonic always ends with: <title> at DD-MM-YYYY, HH-MM AM/PM on.txt
+    TranscripTonic always ends with: <title> at DD-MM-YYYY (or MM-DD-YYYY), HH-MM AM/PM on.txt
     Using regex anchored at the end avoids false positives when the title
     itself contains " at ".
+    Disambiguates DD-MM-YYYY vs MM-DD-YYYY using the file's modification date when available.
 
     Returns:
         tuple[str, str, str]: (meeting_title, date_iso, time_hh_mm)
             date_iso  — "YYYY-MM-DD"
             time_hh_mm — "HH-MM" (24h, dash-separated for safe filenames)
     """
-    # Pattern anchored to the known TranscripTonic suffix
     pattern = r' at (\d{2}-\d{2}-\d{4}), (\d{2}-\d{2} [AP]M) on\.txt$'
     match = re.search(pattern, filename)
 
@@ -142,40 +140,49 @@ def parse_filename(filename: str):
         logger.warning(
             "Cannot parse date/time from filename '%s' — using today as fallback.", filename
         )
-        # Best-effort title extraction
         if f"{config.TRANSCRIPT_PREFIX}-" in filename:
             meeting_title = filename.split(f"{config.TRANSCRIPT_PREFIX}-", 1)[1].replace(".txt", "").strip()
         else:
             meeting_title = filename.replace(".txt", "").strip()
         return meeting_title, datetime.now().strftime("%Y-%m-%d"), "00-00"
 
-    date_raw = match.group(1)   # DD-MM-YYYY
+    date_raw = match.group(1)   # Either DD-MM-YYYY or MM-DD-YYYY
     time_raw = match.group(2)   # HH-MM AM/PM
 
-    datetime_str = f"{date_raw}, {time_raw}"
-    try:
-        # strptime with %I (12h) and %p (AM/PM); minutes separator in source is "-"
-        dt_obj = datetime.strptime(datetime_str, "%d-%m-%Y, %I-%M %p")
+    ref_date = None
+    if source_path and os.path.exists(source_path):
+        try:
+            ref_date = datetime.fromtimestamp(os.path.getmtime(source_path)).date()
+        except Exception:
+            ref_date = None
+
+    candidates = []
+    for fmt in ("%d-%m-%Y, %I-%M %p", "%m-%d-%Y, %I-%M %p"):
+        try:
+            candidates.append(datetime.strptime(f"{date_raw}, {time_raw}", fmt))
+        except ValueError:
+            pass
+
+    if candidates:
+        if ref_date is not None:
+            # Pick the candidate closest to the file's real modification date (fixes MM-DD vs DD-MM inversion)
+            dt_obj = min(candidates, key=lambda dt: abs((dt.date() - ref_date).days))
+        else:
+            # Deterministic default when no file path is provided (DD-MM-YYYY first, then MM-DD-YYYY)
+            dt_obj = candidates[0]
         date_iso = dt_obj.strftime("%Y-%m-%d")
         time_hhmm = dt_obj.strftime("%H-%M")
-        time_display = dt_obj.strftime("%H:%M")
-    except ValueError as exc:
-        logger.warning(
-            "Datetime parse failed for '%s' (%s) — using today as fallback.", filename, exc
-        )
-        date_iso = datetime.now().strftime("%Y-%m-%d")
-        time_hhmm = "00-00"
-        time_display = "00:00"
     else:
-        time_display = dt_obj.strftime("%H:%M")
+        logger.warning(
+            "Datetime parse failed for '%s' — using today as fallback.", filename
+        )
+        fallback_date = ref_date if ref_date is not None else datetime.now().date()
+        date_iso = fallback_date.strftime("%Y-%m-%d")
+        time_hhmm = "00-00"
 
-    # Extract title: everything after "transcript-" up to " at <date>" suffix
-    # We know the match starts with " at DD-MM-YYYY, ..."
     match_start = match.start()
     after_prefix = filename.split(f"{config.TRANSCRIPT_PREFIX}-", 1)
     if len(after_prefix) > 1:
-        # after_prefix[1] is "<title> at DD-MM-YYYY, HH-MM AM/PM on.txt"
-        # match_start is relative to `filename`; compute relative to after_prefix[1]
         prefix_offset = len(f"{config.TRANSCRIPT_PREFIX}-")
         title_end = match_start - prefix_offset
         meeting_title = after_prefix[1][:title_end].strip()
@@ -238,8 +245,7 @@ def ensure_daily_note(date_iso: str):
             content = f"---\ntags: [daily]\ndate: {date_iso}\n---\n\n# 📅 Diário — {date_iso}\n\n## 🗓️ Meetings\n"
 
         with open(daily_file, "w", encoding="utf-8") as df:
-            with open(daily_file, "w", encoding="utf-8") as df:
-                df.write(content)
+            df.write(content)
         logger.info("✅ Created daily note: %s", daily_file)
     except Exception as exc:
         logger.error("Failed to create daily note: %s", exc)
@@ -302,8 +308,8 @@ def process_files():
         all_participants = (set(audio_participants) | set(chat_participants)) - {config.USER_NAME}
         participants_list = sorted(all_participants)
 
-        # Parse filename robustly
-        meeting_title, date_iso, time_hhmm = parse_filename(filename)
+        # Parse filename robustly (passing source_path to disambiguate MM-DD vs DD-MM)
+        meeting_title, date_iso, time_hhmm = parse_filename(filename, source_path=source_path)
 
         # Ensure daily note exists
         ensure_daily_note(date_iso)

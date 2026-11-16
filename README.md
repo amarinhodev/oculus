@@ -1,134 +1,127 @@
-# O.C.U.L.U.S.
+# 👁️ O.C.U.L.U.S.
 **Omniscient Captions Universal Logging & Understanding System**
 
-Automatically turns your Google Meet transcripts into structured, AI-analyzed notes in your Obsidian vault.
+> Turn raw Google Meet live captions into structured, executive-ready **Obsidian** meeting notes automatically — 100% locally orchestrated via **Antigravity CLI (`agy`)** or **Gemini CLI**.
 
-![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue) ![macOS](https://img.shields.io/badge/platform-macOS-lightgrey) ![Gemini CLI](https://img.shields.io/badge/AI-Gemini%20CLI-orange) ![Obsidian](https://img.shields.io/badge/notes-Obsidian-purple)
+![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
+![AI Engine](https://img.shields.io/badge/AI-Antigravity%20(agy)%20%7C%20Gemini%20CLI-orange)
+![Obsidian](https://img.shields.io/badge/notes-Obsidian%20Vault-purple)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
 ---
 
-## How it works
+## ⚡ Why O.C.U.L.U.S.?
 
+Most AI meeting recorders require inviting an intrusive bot (`"Otter.ai joined the meeting"`) or uploading corporate audio to third-party SaaS clouds.
+
+**O.C.U.L.U.S.** takes a zero-bot, local-first approach:
+1. **No meeting bots:** Uses [TranscripTonic](https://chromewebstore.google.com/detail/transcriptonic/ciepnfnceimjehngolkijpnbappkkiag) to passively capture Google Meet closed captions in your browser and save a plain `.txt` transcript locally.
+2. **Instant filesystem detection:** `watcher.py` (`watchdog` FSEvents/inotify) detects new transcripts the second your call ends.
+3. **Smart Markdown & Date Disambiguation (V10.0):** `processor.py` merges incremental caption fragments, normalizes speaker aliases (`You` / `Você` → your name), and automatically disambiguates `DD-MM-YYYY` vs `MM-DD-YYYY` filenames using file modification metadata (`mtime`).
+4. **Empty-Call Protection:** Automatically skips aborted or empty meeting rooms (`< 1` dialogue turn) so your Vault stays noise-free.
+5. **Vault-Aware AI Synthesis (V10.0):** Invokes the `oculus-analyzer` skill via `agy` or `gemini` to discover existing projects in your Obsidian Vault (`[[Wikilinks]]`), extract decisions and action items, write the structured meeting note, and append a 1-line summary to your Daily Note (`daily/YYYY-MM-DD.md`).
+
+---
+
+## 🏗️ Architecture & Pipeline
+
+```text
+Google Meet (Captions ON)
+   └──► TranscripTonic (.txt in ~/Downloads/TranscripTonic)
+           └──► watcher.py (Watchdog FSEvents + Empty-Call Guard + Retry Queue)
+                   └──► processor.py (Fragment Merger + mtime Date Disambiguator)
+                           └──► Captions/YYYY-MM-DD_HH-MM_<Title>.md
+                                   └──► Antigravity CLI (agy) / Gemini CLI + oculus-analyzer (V10.0)
+                                           ├──► Vault/Meetings/YYYY-MM-DD_HH-MM_<Title>.md
+                                           └──► Vault/daily/YYYY-MM-DD.md (Append-only)
 ```
-Google Meet → TranscripTonic → watcher.py → processor.py → Gemini CLI (V9.2) → Obsidian vault
-```
-
-| Step | What happens |
-|------|-------------|
-| **Google Meet** | You have your meeting normally |
-| **TranscripTonic** | Chrome extension captures captions and saves a `.txt` to your Downloads |
-| **watcher.py** | Real-time file monitor (watchdog) detects the new transcript instantly |
-| **processor.py** | Converts raw `.txt` into structured Markdown, organized by speaker and timestamp |
-| **Gemini CLI (V9.2)** | AI skill queries your Obsidian vault via RAG, then generates the final note |
-| **Obsidian vault** | Structured `.md` note lands in your Meetings folder + daily log updated |
 
 ---
 
-## Prerequisites *(manual steps — only these two)*
+## 🚀 Quickstart
 
-1. Install [TranscripTonic](https://chromewebstore.google.com/detail/transcriptonic/ciepnfnceimjehngolkijpnbappkkiag) Chrome extension — enable **Auto Mode**
-2. Have **Python 3.11+** installed
+### Prerequisites
+1. Install the [TranscripTonic](https://chromewebstore.google.com/detail/transcriptonic/ciepnfnceimjehngolkijpnbappkkiag) Chrome extension and enable **Auto Mode**.
+2. **Python 3.11+** and either **Antigravity CLI (`agy`)** or **Gemini CLI (`gemini`)** installed.
 
-Everything else is handled automatically by the installer.
-
----
-
-## Installation
+### One-Command Installation
 
 ```bash
-git clone https://github.com/amarinhodev/oculus
+git clone https://github.com/amarinhodev/oculus.git
 cd oculus
-python install.py
+python3 install.py
 ```
 
-That's it. OCULUS will run automatically every time you log in.
-
-**What `install.py` does behind the scenes:**
-- Creates a Python virtual environment
-- Installs dependencies (`watchdog`, etc.)
-- Installs Gemini CLI if not present
-- Installs the `oculus-analyzer` skill (V9.2) into Gemini
-- Walks you through minimal config (name, vault path, language)
-- Registers the watcher as a background service via macOS LaunchAgent
+**What `install.py` configures automatically:**
+- Installs Python dependencies (`requirements.txt`).
+- Detects `agy` (Antigravity CLI) or `gemini` CLI in your `PATH`.
+- Installs the `oculus-analyzer` skill into `~/.gemini/skills/oculus-analyzer/`.
+- Generates your local `config.py` (git-ignored) from `config.example.py`.
+- Scaffolds `Meetings/`, `daily/`, and `_Templates/` in your Obsidian Vault if missing.
+- Registers `com.oculus.watcher` as a native background LaunchAgent on macOS.
 
 ---
 
-## Configuration
+## ⚙️ Configuration (`config.py`)
 
-`install.py` creates `config.py` from `config.example.py` during setup. You can edit it at any time.
+`config.py` is git-ignored so your personal paths and vault taxonomy never leak into version control.
 
-| Setting | Description | Example |
-|---------|-------------|---------|
-| `USER_NAME` | Your name as it appears in transcripts | `"John Smith"` |
-| `LOCAL_USER_ALIASES` | How TranscripTonic labels you in transcripts | `["You", "Vous"]` |
-| `PREFERRED_LANGUAGE` | Language for AI-generated notes | `"English"`, `"Brazilian Portuguese"`, `"Spanish"` |
-| `OBSIDIAN_VAULT` | Path to your Obsidian vault | `"~/Documents/MyVault"` |
+| Setting | Description | Default / Example |
+|---------|-------------|-------------------|
+| `USER_NAME` | Your full name (replaces `"You"` / `"Você"` in transcripts) | `"Jane Doe"` |
+| `LOCAL_USER_ALIASES` | Labels used by Google Meet for the local speaker | `["You", "Você"]` |
+| `PREFERRED_LANGUAGE` | Output language for AI executive summaries and notes | `"English"`, `"Brazilian Portuguese"` |
+| `VAULT_PATH` | Absolute path to your Obsidian Vault | `"~/Documents/ObsidianVault"` |
+| `MEETINGS_PATH` | Target directory for generated meeting notes | `os.path.join(VAULT_PATH, "Meetings")` |
+| `DAILY_PATH` | Target directory for daily notes (`YYYY-MM-DD.md`) | `os.path.join(VAULT_PATH, "daily")` |
+| `AGY_BIN` | Path to `agy` or `gemini` executable | `"agy"` |
+| `CUSTOM_PROMPT_INSTRUCTIONS` | Optional vault-specific frontmatter or closed-tag rules | `""` |
 
----
-
-## What gets generated
-
-After each meeting, a structured note appears in your Obsidian vault:
-
-- **Structured `.md` note** in your `Meetings/` folder
-- **Automatic Daily Log integration:** OCULUS creates the daily note (if missing) and appends a summary of the meeting.
-- **YAML frontmatter:** title, date, participants, meeting type
-- **Executive summary** — key topics covered
-- **Decisions** — what was decided
-- **Action items** — who does what, by when
-- **Insights** — patterns and observations from the conversation
-- **WikiLinks** to related projects, people, and tools discovered in your vault
+> **Advanced Vault Customization (`LOCAL_CONTEXT.md`):**
+> Need custom tag taxonomies, specific MOC paths, or local issue-tracker CLI enrichment (such as Jira)? Create a git-ignored `skills/oculus-analyzer/LOCAL_CONTEXT.md` file — `SKILL.md` automatically loads it as an authoritative override without touching tracked files.
 
 ---
 
-## Project structure
+## 📂 Project Structure
 
-```
+```text
 oculus/
-├── watcher.py              # Real-time file monitor (watchdog) + AI trigger
-├── processor.py            # TranscripTonic → structured Markdown converter
-├── install.py              # Native installer (optimized for macOS)
-├── uninstall.py            # Clean uninstaller
-├── config.example.py       # Configuration template
-├── requirements.txt        # Python dependencies
+├── watcher.py                      # Real-time file monitor (watchdog), retry queue & CLI runner
+├── processor.py                    # TranscripTonic .txt → structured Markdown + YAML converter
+├── install.py                      # Cross-platform native installer & LaunchAgent setup
+├── uninstall.py                    # Clean uninstaller (preserves your Obsidian notes)
+├── config.example.py               # Public configuration template
+├── requirements.txt                # Python dependencies
 ├── skills/
 │   └── oculus-analyzer/
-│       └── SKILL.md        # Gemini CLI skill (V9.2 — RAG-native)
+│       └── SKILL.md                # V10.0 AI skill (RAG + deterministic MOC discovery)
 └── tests/
-    └── test_processor.py   # Automated test suite (22 tests)
+    └── test_processor.py           # Automated pytest suite (24 unit tests)
 ```
 
 ---
 
-## Uninstall
+## 🧪 Running Tests
+
+All unit tests run in complete isolation using a mocked `config` module and temporary fixtures:
 
 ```bash
-python uninstall.py
+pytest tests/ -v
 ```
 
-Removes the background service, virtual environment, and optionally the config file. Your Obsidian notes are never deleted.
+---
+
+## 🧹 Uninstall
+
+```bash
+python3 uninstall.py
+```
+
+Stops and removes the background service, cleans up the skill installation, and optionally removes `config.py`. Your Obsidian vault notes are never modified or deleted.
 
 ---
 
-## How the AI analysis works
+## 📄 License
 
-The `oculus-analyzer` skill (V9.2) is RAG-native — it reads your vault before writing anything:
-
-- **Before analyzing your transcript**, the AI queries your Obsidian vault to discover your projects, people, and tools
-- **Queries are executed in your `PREFERRED_LANGUAGE`** for maximum accuracy
-- **Links mentioned topics** to existing notes in your vault automatically
-- **No hardcoded knowledge** — works for any user, any vault structure
-
----
-
-## Multilingual support
-
-OCULUS itself is in English, but the notes it generates follow your `PREFERRED_LANGUAGE` setting.
-
-Supported: any language Gemini CLI supports (English, Brazilian Portuguese, Spanish, French, German, and more).
-
----
-
-## License / Contributing
-
-MIT License. Contributions welcome — open an issue or submit a PR.
+Released under the [MIT License](./LICENSE). Contributions, issues, and feature requests are welcome.

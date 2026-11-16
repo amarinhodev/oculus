@@ -197,6 +197,28 @@ class TestParseFilename:
         assert time_hhmm == "00-00"
         # Must not raise an exception — reaching here means it passed
 
+    def test_parse_mm_dd_yyyy_unambiguous(self):
+        """US date format MM-DD-YYYY where DD > 12 is parsed into YYYY-MM-DD."""
+        filename = "Google Meet transcript-Architecture Review at 04-13-2026, 02-15 PM on.txt"
+        title, date_iso, time_hhmm = parse_filename(filename)
+        assert title == "Architecture Review"
+        assert date_iso == "2026-04-13"
+        assert time_hhmm == "14-15"
+
+    def test_parse_disambiguates_ambiguous_date_with_mtime(self, tmp_path):
+        """Ambiguous date (04-10-2026: Oct 4 vs Apr 10) uses file mtime when source_path is given."""
+        filename = "Google Meet transcript-Sprint Sync at 04-10-2026, 10-00 AM on.txt"
+        file_path = tmp_path / filename
+        file_path.write_text("dummy", encoding="utf-8")
+        # Set file mtime to April 10, 2026 10:05:00
+        apr_10_ts = datetime(2026, 4, 10, 10, 5, 0).timestamp()
+        os.utime(file_path, (apr_10_ts, apr_10_ts))
+
+        title, date_iso, time_hhmm = parse_filename(filename, source_path=str(file_path))
+        assert title == "Sprint Sync"
+        assert date_iso == "2026-04-10"
+        assert time_hhmm == "10-00"
+
 
 # ===========================================================================
 # detect_meeting_type()
@@ -211,10 +233,10 @@ class TestDetectMeetingType:
         assert detect_meeting_type("Weekly Infra Core") == "weekly"
 
     def test_type_1on1(self):
-        assert detect_meeting_type("1:1 Anderson e Maria") == "1:1"
+        assert detect_meeting_type("1:1 Anderson e Maria") == "one-on-one"
 
     def test_type_followup(self):
-        assert detect_meeting_type("FUP Projeto X") == "follow-up"
+        assert detect_meeting_type("FUP Projeto X") == "fup"
 
     def test_type_default(self):
         """Title with no recognized keyword → 'meeting'."""

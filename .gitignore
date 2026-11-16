@@ -1,18 +1,47 @@
-# Python Environment
+# Python Environment & Bytecode
 .venv/
+.venv*/
+venv/
+venv*/
+env/
 __pycache__/
+.pytest_cache/
 *.pyc
+node_modules/
 
-# Dynamic Data (Transcripts and Analyses)
+# Dynamic Data & Local Vault Output
 Captions/
+Daily/
+Notes/
 Engineering/
 Log_Entregas_*.md
+.analyzed_captions.json
 
-# Infrastructure and Security (Certs and Keys)
-*.pem
-env.yaml
+# Local Configuration & Overrides (Never Commit)
 config.py
+skills/oculus-analyzer/LOCAL_CONTEXT.md
+main.py
+test_gemini.py
+.bin/
 
-# Logs
+# Logs & Local Dev Tracking
 *.log
 development_log.md
+
+# Graphify (Derived AST Artifact — Maintained via post-commit hook)
+graphify-out/
+
+# Secrets & Credentials (Protocolo ÔMEGA)
+.env
+.env.*
+!.env.example
+env.yaml
+*credentials*.json
+*token*.json
+*service_account*.json
+*secret*.json
+*.pem
+*.key
+
+# OS Metadata
+.DS_Store

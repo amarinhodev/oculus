@@ -103,16 +103,23 @@ def step3_install_dependencies(oculus_dir: Path) -> None:
         warn("requirements.txt not found — skipping")
 
 def step4_gemini_cli() -> str:
-    header("Step 4 — Verify Gemini CLI")
+    header("Step 4 — Verify AI CLI (Antigravity `agy` or Gemini CLI `gemini`)")
+    agy_path = shutil.which("agy") or str(Path.home() / ".local" / "bin" / "agy")
+    if Path(agy_path).exists():
+        ok(f"Antigravity CLI (agy) found at: {agy_path}")
+        return agy_path
+
     gemini_path = shutil.which("gemini")
     node_path = shutil.which("node")
-    
     if gemini_path and node_path:
         full_command = f"{node_path} {gemini_path}"
         ok(f"gemini CLI found at: {gemini_path}")
         return full_command
-    
-    abort("gemini CLI or Node not found in PATH.", "Please install Node.js and Gemini CLI: npm install -g @google/gemini-cli")
+
+    abort(
+        "Neither `agy` (Antigravity CLI) nor `gemini` CLI was found in PATH.",
+        "Install Antigravity CLI (`agy`) or Gemini CLI (`npm install -g @google/gemini-cli`).",
+    )
 
 def step5_install_skill(os_name: str, oculus_dir: Path) -> None:
     header("Step 5 — Install oculus-analyzer skill")
@@ -152,7 +159,12 @@ def step6_configure(oculus_dir: Path, gemini_path: str) -> None:
     obsidian_path = str(Path(obsidian_path).expanduser().resolve())
 
     patched = template.replace('USER_NAME = "Your Name"', f'USER_NAME = "{user_name}"')
+    patched = patched.replace('AGY_BIN = "agy"', f'AGY_BIN = "{gemini_path}"')
     patched = patched.replace('GEMINI_BIN = "gemini"', f'GEMINI_BIN = "{gemini_path}"')
+    patched = patched.replace(
+        'VAULT_PATH = os.path.expanduser("~/Documents/ObsidianVault")',
+        f'VAULT_PATH = "{obsidian_path}"',
+    )
     patched = patched.replace('VAULT_PATH = "~/Documents/ObsidianVault"', f'VAULT_PATH = "{obsidian_path}"')
     
     config_file.write_text(patched, encoding="utf-8")
